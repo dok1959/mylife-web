@@ -32,6 +32,12 @@ namespace MyLife.Controllers
             return Ok();
         }
 
+        [HttpPost]
+        public IActionResult UpdateAccount()
+        {
+            return Ok();
+        }
+
         [NonAction]
         private ClaimsIdentity GetIdentity(string login, string password)
         {
