@@ -9,9 +9,9 @@ namespace MyLife.Controllers
     public class AccountController : ControllerBase
     {
         ApplicationContext _context;
-        public AccountController(ApplicationContext context)
+        public AccountController()
         {
-            _context = context;
+            _context = new ApplicationContext();
         }
 
         [HttpPost]
@@ -37,6 +37,12 @@ namespace MyLife.Controllers
         {
             return Ok();
         }
+
+        /*[HttpGet("username")]
+        public string GetUsername()
+        {
+            return "doki";
+        }*/
 
         [NonAction]
         private ClaimsIdentity GetIdentity(string login, string password)
