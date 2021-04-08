@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using MyLife.Data;
 using MyLife.Models;
+using MyLife.Repositories;
 using System.Security.Claims;
+using System.Text;
 
 namespace MyLife.Controllers
 {
@@ -8,10 +11,10 @@ namespace MyLife.Controllers
     [ApiController]
     public class AccountController : ControllerBase
     {
-        ApplicationContext _context;
+        private UserRepository _repo;
         public AccountController()
         {
-            _context = new ApplicationContext();
+            _repo = new UserRepository(new ApplicationContext());
         }
 
         [HttpPost]
@@ -33,16 +36,20 @@ namespace MyLife.Controllers
         }
 
         [HttpPost]
-        public IActionResult UpdateAccount()
+        public IActionResult Update()
         {
             return Ok();
         }
 
-        /*[HttpGet("username")]
-        public string GetUsername()
+        [HttpGet("getusers")]
+        public string GetAllUsers()
         {
-            return "doki";
-        }*/
+            var repoUsers = _repo.GetAll();
+            StringBuilder builder = new StringBuilder();
+            foreach(var user in repoUsers)
+                builder.Append(user.Login + " " + user.Password);
+            return builder.ToString();
+        }
 
         [NonAction]
         private ClaimsIdentity GetIdentity(string login, string password)
