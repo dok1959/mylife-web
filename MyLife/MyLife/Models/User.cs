@@ -1,16 +1,36 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
+using System.Text.Json.Serialization;
 
 namespace MyLife.Models
 {
     public class User
     {
-        public int Id { get; set; }
+        [JsonIgnore]
+        public ObjectId Id { get; set; }
 
+        [BsonRequired]
+        [BsonElement("login")]
         public string Login { get; set; }
 
+        [BsonElement("nickname")]
+        public string Nickname { get; set; }
+
+        [BsonElement("firstName")]
+        public string FirstName { get; set; }
+
+        [BsonElement("lastName")]
+        public string LastName { get; set; }
+
+        [BsonElement("city")]
+        public string City { get; set; }
+
+        [BsonElement("email")]
+        public string Email { get; set; }
+
+        [JsonIgnore]
+        [BsonRequired]
+        [BsonElement("password")]
         public string Password { get; set; }
     }
 }

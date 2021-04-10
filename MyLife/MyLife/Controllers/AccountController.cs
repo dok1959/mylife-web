@@ -1,9 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using MyLife.Data;
 using MyLife.Models;
 using MyLife.Repositories;
+using System;
+using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Security.Claims;
-using System.Text;
 
 namespace MyLife.Controllers
 {
@@ -17,8 +22,8 @@ namespace MyLife.Controllers
             _repo = new UserRepository(new ApplicationContext());
         }
 
-        [HttpPost]
-        public IActionResult Login([FromBody] LoginViewModel model)
+        [HttpGet("login")]
+        public IActionResult Login([FromQuery]LoginViewModel model)
         {
             var identity = GetIdentity(model.Login, model.Password);
             if(identity == null)
@@ -28,39 +33,59 @@ namespace MyLife.Controllers
             return CreateJwtToken(identity);
         }
 
-        [HttpPost]
-        [ActionName("register")]
+        [HttpPost("register")]
         public IActionResult Registration([FromBody] RegisterViewModel model)
         {
             return Ok();
         }
 
-        [HttpPost]
+        [HttpPost("update")]
         public IActionResult Update()
         {
             return Ok();
         }
 
-        [HttpGet("getusers")]
-        public string GetAllUsers()
+        //[Authorize]
+        [HttpGet("getallusers")]
+        public JsonResult GetAllUsers()
         {
-            var repoUsers = _repo.GetAll();
-            StringBuilder builder = new StringBuilder();
-            foreach(var user in repoUsers)
-                builder.Append(user.Login + " " + user.Password);
-            return builder.ToString();
+            //_repo.Add(new User { Login = "Genadiy", Nickname = "Genchik", Password = "WHAAAt" });
+
+            return new JsonResult(_repo.GetAll());
         }
 
         [NonAction]
         private ClaimsIdentity GetIdentity(string login, string password)
         {
+            var user = _repo.Find(x => x.Login == login && x.Password == password).FirstOrDefault();
+            if (user != null)
+            {
+                var claims = new List<Claim>
+                {
+                    new Claim(ClaimsIdentity.DefaultNameClaimType, user.Login),
+                };
+                ClaimsIdentity claimsIdentity = new ClaimsIdentity(
+                    claims, "Token", 
+                    ClaimsIdentity.DefaultNameClaimType, 
+                    ClaimsIdentity.DefaultRoleClaimType);
+                return claimsIdentity;
+            }
             return null;
         }
 
         [NonAction]
         private JsonResult CreateJwtToken(ClaimsIdentity identity)
         {
-            return null;
+            var now = DateTime.UtcNow;
+            var jwt = new JwtSecurityToken(
+                    issuer: AuthOptions.ISSUER,
+                    audience: AuthOptions.AUDIENCE,
+                    notBefore: now,
+                    claims: identity.Claims,
+                    expires: now.Add(TimeSpan.FromMinutes(AuthOptions.LIFETIME)),
+                    signingCredentials: new SigningCredentials(AuthOptions.GetSymmetricSecurityKey(), SecurityAlgorithms.HmacSha256));
+            var encodedJwt = new JwtSecurityTokenHandler().WriteToken(jwt);
+            return new JsonResult(new { access_token = encodedJwt } );
         }
     }
 }
