@@ -13,8 +13,8 @@ namespace MyLife.Models
         [BsonElement("login")]
         public string Login { get; set; }
 
-        [BsonElement("nickname")]
-        public string Nickname { get; set; }
+        [BsonElement("username")]
+        public string Username { get; set; }
 
         [BsonElement("firstName")]
         public string FirstName { get; set; }

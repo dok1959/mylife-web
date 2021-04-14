@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using MongoDB.Bson;
 using MyLife.Data;
 using MyLife.Models;
 using MyLife.Repositories;
+using MyLife.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -50,8 +52,30 @@ namespace MyLife.Controllers
         public JsonResult GetAllUsers()
         {
             //_repo.Add(new User { Login = "Genadiy", Nickname = "Genchik", Password = "WHAAAt" });
+            var users = new List<UserViewModel>();
+            foreach (var user in _repo.GetAll())
+            {
+                users.Add(new UserViewModel
+                {
+                    Id = user.Id.ToString(),
+                    Username = user.Username
+                });
+            }
+            return new JsonResult(users);
+        }
 
-            return new JsonResult(_repo.GetAll());
+        [HttpGet("getuser/{id}")]
+        public IActionResult GetUser(string id)
+        {
+            var objectId = ObjectId.Parse(id);
+            if(objectId == null)
+                return NotFound("Wrong user id");
+
+            var user = _repo.Get(objectId);
+            if(user == null)
+                return NotFound("User not found");
+
+            return new JsonResult(user);
         }
 
         [NonAction]
