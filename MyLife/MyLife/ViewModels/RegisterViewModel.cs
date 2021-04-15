@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace MyLife.Models
+namespace MyLife.ViewModels
 {
     public class RegisterViewModel
     {

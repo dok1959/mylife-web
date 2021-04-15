@@ -1,12 +1,10 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
-using System.Text.Json.Serialization;
 
 namespace MyLife.Models
 {
     public class User
     {
-        [JsonIgnore]
         public ObjectId Id { get; set; }
 
         [BsonRequired]
@@ -28,7 +26,6 @@ namespace MyLife.Models
         [BsonElement("email")]
         public string Email { get; set; }
 
-        [JsonIgnore]
         [BsonRequired]
         [BsonElement("password")]
         public string Password { get; set; }

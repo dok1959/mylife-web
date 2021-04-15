@@ -24,15 +24,27 @@ namespace MyLife.Controllers
             _repo = new UserRepository(new ApplicationContext());
         }
 
-        [HttpGet("login")]
-        public IActionResult Login([FromQuery]LoginViewModel model)
+        [HttpPost("login")]
+        public IActionResult Login([FromBody]LoginViewModel model)
         {
-            var identity = GetIdentity(model.Login, model.Password);
+            //var identity = GetIdentity(model.Login, model.Password);
+            User identity = null;
+            identity = _repo.Find(x => x.Login == model.Login && x.Password == model.Password)?.FirstOrDefault();
             if(identity == null)
             {
                 return BadRequest(new { errorText = "Invalid login or password" });
             }
-            return CreateJwtToken(identity);
+            return Ok(new
+            {
+                id = identity.Id.ToString(),
+                login = identity.Login,
+                username = identity.Username,
+                firstName = identity.FirstName,
+                lastName = identity.LastName,
+                city = identity.City,
+                email = identity.Email
+            });
+            //return CreateJwtToken(identity);
         }
 
         [HttpPost("register")]
@@ -49,7 +61,7 @@ namespace MyLife.Controllers
 
         //[Authorize]
         [HttpGet("getallusers")]
-        public JsonResult GetAllUsers()
+        public IActionResult GetAllUsers()
         {
             //_repo.Add(new User { Login = "Genadiy", Nickname = "Genchik", Password = "WHAAAt" });
             var users = new List<UserViewModel>();
@@ -61,7 +73,7 @@ namespace MyLife.Controllers
                     Username = user.Username
                 });
             }
-            return new JsonResult(users);
+            return Ok(users);
         }
 
         [HttpGet("getuser/{id}")]
@@ -69,14 +81,29 @@ namespace MyLife.Controllers
         {
             var objectId = ObjectId.Parse(id);
             if(objectId == null)
-                return NotFound("Wrong user id");
+                return BadRequest("Wrong user id");
 
             var user = _repo.Get(objectId);
             if(user == null)
                 return NotFound("User not found");
 
-            return new JsonResult(user);
+            return Ok(new
+            {
+                id = user.Id.ToString(),
+                login = user.Login,
+                username = user.Username,
+                firstName = user.FirstName,
+                lastName = user.LastName,
+                city = user.City,
+                email = user.Email
+            });
         }
+
+        /*[HttpPost("adduser")]
+        public void AddUser([FromBody] User user)
+        {
+            _repo.Add(user);
+        }*/
 
         [NonAction]
         private ClaimsIdentity GetIdentity(string login, string password)

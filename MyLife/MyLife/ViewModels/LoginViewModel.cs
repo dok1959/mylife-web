@@ -1,4 +1,4 @@
-﻿namespace MyLife.Models
+﻿namespace MyLife.ViewModels
 {
     public class LoginViewModel
     {
