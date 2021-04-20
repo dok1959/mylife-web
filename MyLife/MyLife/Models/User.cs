@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using MyLife.ViewModels;
 
 namespace MyLife.Models
 {
@@ -27,7 +28,15 @@ namespace MyLife.Models
         public string Email { get; set; }
 
         [BsonRequired]
-        [BsonElement("password")]
-        public string Password { get; set; }
+        [BsonElement("hashedPassword")]
+        public string HashedPassword { get; set; }
+
+        public User(RegisterViewModel model)
+        {
+            Login = model.Login;
+            FirstName = model.FirstName;
+            LastName = model.LastName;
+            Email = model.Email;
+        }
     }
 }

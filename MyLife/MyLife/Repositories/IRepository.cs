@@ -4,9 +4,9 @@ using System.Linq.Expressions;
 
 namespace MyLife.Repositories
 {
-    interface IRepository<T, I> where T : class
+    public interface IRepository<T> where T : class
     {
-        public T Get(I id);
+        public T Get(string id);
         public ICollection<T> GetAll();
         public ICollection<T> Find(Expression<Func<T, bool>> predicate);
         public void Add(T item);

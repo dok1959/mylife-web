@@ -1,15 +1,14 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
-using MongoDB.Bson;
 using MyLife.Data;
 using MyLife.Models;
 using MyLife.Repositories;
+using MyLife.Services;
 using MyLife.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
 
 namespace MyLife.Controllers
@@ -18,32 +17,23 @@ namespace MyLife.Controllers
     [ApiController]
     public class AccountController : ControllerBase
     {
-        private UserRepository _repo;
-        public AccountController()
+        private IRepository<User> _repo;
+        private IAccountService _accountService;
+        public AccountController(IAccountService accountService, IRepository<User> repo)
         {
-            _repo = new UserRepository(new ApplicationContext());
+            _repo = repo;
+            _accountService = accountService;
         }
 
         [HttpPost("login")]
         public IActionResult Login([FromBody]LoginViewModel model)
         {
             //var identity = GetIdentity(model.Login, model.Password);
-            User identity = null;
-            identity = _repo.Find(x => x.Login == model.Login && x.Password == model.Password)?.FirstOrDefault();
-            if(identity == null)
+            if(!_accountService.Authenticate(model))
             {
-                return BadRequest(new { errorText = "Invalid login or password" });
+                return BadRequest("Wrong user or password!");
             }
-            return Ok(new
-            {
-                id = identity.Id.ToString(),
-                login = identity.Login,
-                username = identity.Username,
-                firstName = identity.FirstName,
-                lastName = identity.LastName,
-                city = identity.City,
-                email = identity.Email
-            });
+            return Ok();
             //return CreateJwtToken(identity);
         }
 
@@ -79,11 +69,7 @@ namespace MyLife.Controllers
         [HttpGet("getuser/{id}")]
         public IActionResult GetUser(string id)
         {
-            var objectId = ObjectId.Parse(id);
-            if(objectId == null)
-                return BadRequest("Wrong user id");
-
-            var user = _repo.Get(objectId);
+            var user = _repo.Get(id);
             if(user == null)
                 return NotFound("User not found");
 
@@ -105,8 +91,8 @@ namespace MyLife.Controllers
             _repo.Add(user);
         }*/
 
-        [NonAction]
-        private ClaimsIdentity GetIdentity(string login, string password)
+        //[NonAction]
+        /*private ClaimsIdentity GetIdentity(string login, string password)
         {
             var user = _repo.Find(x => x.Login == login && x.Password == password).FirstOrDefault();
             if (user != null)
@@ -122,7 +108,7 @@ namespace MyLife.Controllers
                 return claimsIdentity;
             }
             return null;
-        }
+        }*/
 
         [NonAction]
         private JsonResult CreateJwtToken(ClaimsIdentity identity)

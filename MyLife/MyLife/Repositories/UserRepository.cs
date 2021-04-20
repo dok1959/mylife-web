@@ -3,18 +3,16 @@ using MyLife.Models;
 using System;
 using System.Collections.Generic;
 using MongoDB.Driver;
-using MongoDB.Bson;
 using System.Linq.Expressions;
 
 namespace MyLife.Repositories
 {
-    public class UserRepository : IRepository<User, ObjectId>
+    public class UserRepository : IRepository<User>
     {
         private ApplicationContext _context;
         public UserRepository(ApplicationContext context) => _context = context;
-
         private IMongoCollection<User> Users => _context.Database.GetCollection<User>(nameof(User));
-        public User Get(ObjectId id) => Users.Find(user => user.Id == id).FirstOrDefault();
+        public User Get(string id) => Users.Find(user => user.Id.ToString() == id).FirstOrDefault();
         public ICollection<User> GetAll() => Users.Find(user => true).ToList();
         public ICollection<User> Find(Expression<Func<User, bool>> predicate) => Users.Find(predicate).ToList();
         public void Add(User item) => Users.InsertOne(item);

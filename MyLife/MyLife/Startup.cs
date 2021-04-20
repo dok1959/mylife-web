@@ -6,6 +6,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
+using MyLife.Models;
+using MyLife.Repositories;
+using MyLife.Services;
 
 namespace MyLife
 {
@@ -49,6 +52,10 @@ namespace MyLife
                     ValidateIssuerSigningKey = true,
                 };
             });
+
+            services.AddSingleton<IRepository<User>, UserRepository>();
+            services.AddSingleton<IAccountService, AccountService>();
+
             services.AddControllers();
         }
 
