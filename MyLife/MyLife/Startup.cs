@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
+using MyLife.Data;
 using MyLife.Models;
 using MyLife.Repositories;
 using MyLife.Services;
@@ -49,10 +50,11 @@ namespace MyLife
                     // установка ключа безопасности
                     IssuerSigningKey = AuthOptions.GetSymmetricSecurityKey(),
                     // валидация ключа безопасности
-                    ValidateIssuerSigningKey = true,
+                    ValidateIssuerSigningKey = true
                 };
             });
 
+            services.AddSingleton<ApplicationContext, ApplicationContext>();
             services.AddSingleton<IRepository<User>, UserRepository>();
             services.AddSingleton<IAccountService, AccountService>();
 

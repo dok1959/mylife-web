@@ -1,10 +1,11 @@
-﻿using MyLife.ViewModels;
+﻿using MyLife.Models;
+using MyLife.ViewModels;
 
 namespace MyLife.Services
 {
     public interface IAccountService
     {
         void Register(RegisterViewModel model);
-        bool Authenticate(LoginViewModel model);
+        User Authenticate(LoginViewModel model);
     }
 }
