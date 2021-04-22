@@ -1,7 +1,7 @@
 ﻿using MyLife.Models;
 using MyLife.ViewModels;
 
-namespace MyLife.Services
+namespace MyLife.Services.AccountServices
 {
     public interface IAccountService
     {

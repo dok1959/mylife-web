@@ -9,18 +9,21 @@ using Microsoft.IdentityModel.Tokens;
 using MyLife.Data;
 using MyLife.Models;
 using MyLife.Repositories;
-using MyLife.Services;
+using MyLife.Services.AccountServices;
+using MyLife.Services.PasswordHashers;
+using MyLife.Services.TokenGenerators;
+using System;
+using System.Text;
 
 namespace MyLife
 {
     public class Startup
     {
+        public IConfiguration _configuration;
         public Startup(IConfiguration configuration)
         {
-            Configuration = configuration;
+            _configuration = configuration;
         }
-
-        public IConfiguration Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -30,33 +33,35 @@ namespace MyLife
                 options.AppendTrailingSlash = true;
                 options.LowercaseUrls = true;
             });
+
+            var accessTokenConfig = _configuration.GetSection("Authentication");
+
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
             {
                 options.RequireHttpsMetadata = false;
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
-                    // укзывает, будет ли валидироваться издатель при валидации токена
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(accessTokenConfig["AccessTokenSecret"])),
+                    ValidIssuer = accessTokenConfig["Issuer"],
+                    ValidAudience = accessTokenConfig["Audience"],
                     ValidateIssuer = true,
-                    // строка, представляющая издателя
-                    ValidIssuer = AuthOptions.ISSUER,
-
-                    // будет ли валидироваться потребитель токена
                     ValidateAudience = true,
-                    // установка потребителя токена
-                    ValidAudience = AuthOptions.AUDIENCE,
-                    // будет ли валидироваться время существования
-                    ValidateLifetime = true,
-
-                    // установка ключа безопасности
-                    IssuerSigningKey = AuthOptions.GetSymmetricSecurityKey(),
-                    // валидация ключа безопасности
-                    ValidateIssuerSigningKey = true
+                    ValidateIssuerSigningKey = true,
+                    ClockSkew = TimeSpan.Zero
                 };
             });
 
             services.AddSingleton<ApplicationContext, ApplicationContext>();
             services.AddSingleton<IRepository<User>, UserRepository>();
+
             services.AddSingleton<IAccountService, AccountService>();
+
+            services.AddSingleton<TokenGenerator>();
+            services.AddSingleton<AccessTokenGenerator>();
+            services.AddSingleton<RefreshTokenGenerator>();
+
+            services.AddTransient<IPasswordHasher, BcryptPasswordHasher>();
+
 
             services.AddControllers();
         }
@@ -73,6 +78,7 @@ namespace MyLife
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>

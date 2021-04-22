@@ -31,13 +31,10 @@ namespace MyLife.Models
         [BsonElement("hashedPassword")]
         public string HashedPassword { get; set; }
 
-        [BsonRequired]
-        [BsonElement("refreshToken")]
-        public string RefreshToken { get; set; }
-
         public User(RegisterViewModel model)
         {
             Login = model.Login;
+            Username = model.Username;
             FirstName = model.FirstName;
             LastName = model.LastName;
             Email = model.Email;

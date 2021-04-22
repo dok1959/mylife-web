@@ -1,15 +1,11 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
 using MyLife.Models;
 using MyLife.Repositories;
-using MyLife.Services;
+using MyLife.Services.AccountServices;
+using MyLife.Services.TokenGenerators;
 using MyLife.ViewModels;
-using System;
 using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 
 namespace MyLife.Controllers
 {
@@ -19,12 +15,19 @@ namespace MyLife.Controllers
     {
         private IRepository<User> _repo;
         private IAccountService _accountService;
-        private IConfiguration _config;
-        public AccountController(IRepository<User> repo, IAccountService accountService, IConfiguration config)
+        private AccessTokenGenerator _accessTokenGenerator;
+        private RefreshTokenGenerator _refreshTokenGenerator;
+
+        public AccountController(
+            IRepository<User> repo, 
+            IAccountService accountService,
+            AccessTokenGenerator accessTokenGenerator,
+            RefreshTokenGenerator refreshTokenGenerator)
         {
             _repo = repo;
             _accountService = accountService;
-            _config = config;
+            _accessTokenGenerator = accessTokenGenerator;
+            _refreshTokenGenerator = refreshTokenGenerator;
         }
 
         [HttpPost("login")]
@@ -35,17 +38,10 @@ namespace MyLife.Controllers
             {
                 return BadRequest("Wrong user or password!");
             }
-            var userClaims = GetClaims(user);
-            var accessConfig = new AuthenticationConfiguration
-            {
-
-            }
-            var access_token = CreateJwtToken(userClaims);
-            var refresh_token = CreateJwtToken(userClaims);
             return Ok(new
             {
-                access_token = access_token,
-                refresh_token = refresh_token
+                accessToken = _accessTokenGenerator.GenerateToken(user),
+                refreshToken = _refreshTokenGenerator.GenerateToken()
             });
         }
 
@@ -56,29 +52,34 @@ namespace MyLife.Controllers
             return Ok();
         }
 
+        [HttpPost("refresh")]
+        public IActionResult Refresh([FromBody] string refreshToken)
+        {
+            if (refreshToken == null)
+                return BadRequest("Wrong refresh token");
+
+            return Ok();
+        }
+
         [HttpPost("update")]
         public IActionResult Update()
         {
             return Ok();
         }
 
-        //[Authorize]
+        [Authorize]
         [HttpGet("getallusers")]
         public IActionResult GetAllUsers()
         {
-            //_repo.Add(new User { Login = "Genadiy", Nickname = "Genchik", Password = "WHAAAt" });
             var users = new List<UserViewModel>();
             foreach (var user in _repo.GetAll())
             {
-                users.Add(new UserViewModel
-                {
-                    Id = user.Id.ToString(),
-                    Username = user.Username
-                });
+                users.Add(new UserViewModel(user));
             }
             return Ok(users);
         }
 
+        [Authorize]
         [HttpGet("getuser/{id}")]
         public IActionResult GetUser(string id)
         {
@@ -96,44 +97,6 @@ namespace MyLife.Controllers
                 city = user.City,
                 email = user.Email
             });
-        }
-
-        /*[HttpPost("adduser")]
-        public void AddUser([FromBody] User user)
-        {
-            _repo.Add(user);
-        }*/
-
-        [NonAction]
-        private ClaimsIdentity GetClaims(User user)
-        {
-            if (user != null)
-            {
-                var claims = new List<Claim>
-                {
-                    new Claim(ClaimsIdentity.DefaultNameClaimType, user.Login),
-                };
-                ClaimsIdentity claimsIdentity = new ClaimsIdentity(
-                    claims, "Token", 
-                    ClaimsIdentity.DefaultNameClaimType, 
-                    "User");
-                return claimsIdentity;
-            }
-            return null;
-        }
-
-        [NonAction]
-        private string CreateJwtToken(ClaimsIdentity identity, AuthenticationConfiguration authConfig)
-        {
-            var now = DateTime.UtcNow;
-            var jwt = new JwtSecurityToken(
-                    issuer: authConfig.Issuer,
-                    audience: authConfig.Audience,
-                    notBefore: now,
-                    claims: identity.Claims,
-                    expires: now.Add(TimeSpan.FromMinutes(authConfig.TokenExpirationMinutes)),
-                    signingCredentials: new SigningCredentials(authConfig.GetSymmetricSecurityKey(), SecurityAlgorithms.HmacSha256));
-            return new JwtSecurityTokenHandler().WriteToken(jwt);
         }
     }
 }
