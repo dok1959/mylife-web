@@ -6,6 +6,7 @@ using MyLife.Services.AccountServices;
 using MyLife.Services.TokenGenerators;
 using MyLife.ViewModels;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace MyLife.Controllers
 {
@@ -36,7 +37,7 @@ namespace MyLife.Controllers
             var user = _accountService.Authenticate(model);
             if (user == null)
             {
-                return BadRequest("Wrong user or password!");
+                return BadRequest(new { errorMessage = "Wrong login or password" });
             }
             return Ok(new
             {
@@ -48,6 +49,10 @@ namespace MyLife.Controllers
         [HttpPost("register")]
         public IActionResult Registration([FromBody] RegisterViewModel model)
         {
+            if (_repo.Find(u => u.Login == model.Login).FirstOrDefault() != null)
+            {
+                return BadRequest(new { errorMessage = "User with this login is already registered" });
+            }
             _accountService.Register(model);
             return Ok();
         }
