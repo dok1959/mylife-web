@@ -4,6 +4,7 @@ using MyLife.Models;
 using MyLife.Repositories;
 using MyLife.Services.AccountServices;
 using MyLife.Services.TokenGenerators;
+using MyLife.Services.TokenValidators;
 using MyLife.ViewModels;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,21 +15,28 @@ namespace MyLife.Controllers
     [ApiController]
     public class AccountController : ControllerBase
     {
-        private IRepository<User> _repo;
+        private IRepository<User> _userRepository;
+        private IRepository<Desire> _desireRepository;
         private IAccountService _accountService;
+
         private AccessTokenGenerator _accessTokenGenerator;
         private RefreshTokenGenerator _refreshTokenGenerator;
+        private RefreshTokenValidator _refreshTokenValidator;
 
         public AccountController(
-            IRepository<User> repo, 
+            IRepository<User> userRepository,
+            IRepository<Desire> desireRepository,
             IAccountService accountService,
             AccessTokenGenerator accessTokenGenerator,
-            RefreshTokenGenerator refreshTokenGenerator)
+            RefreshTokenGenerator refreshTokenGenerator,
+            RefreshTokenValidator refreshTokenValidator)
         {
-            _repo = repo;
+            _userRepository = userRepository;
+            _desireRepository = desireRepository;
             _accountService = accountService;
             _accessTokenGenerator = accessTokenGenerator;
             _refreshTokenGenerator = refreshTokenGenerator;
+            _refreshTokenValidator = refreshTokenValidator;
         }
 
         [HttpPost("login")]
@@ -39,17 +47,21 @@ namespace MyLife.Controllers
             {
                 return BadRequest(new { errorMessage = "Wrong login or password" });
             }
+
+            user.RefreshToken = _refreshTokenGenerator.GenerateToken();
+            _userRepository.Update(user);
+
             return Ok(new
             {
                 accessToken = _accessTokenGenerator.GenerateToken(user),
-                refreshToken = _refreshTokenGenerator.GenerateToken()
+                refreshToken = user.RefreshToken
             });
         }
 
         [HttpPost("register")]
         public IActionResult Registration([FromBody] RegisterViewModel model)
         {
-            if (_repo.Find(u => u.Login == model.Login).FirstOrDefault() != null)
+            if (_userRepository.Find(u => u.Login == model.Login).FirstOrDefault() != null)
             {
                 return BadRequest(new { errorMessage = "User with this login is already registered" });
             }
@@ -58,12 +70,32 @@ namespace MyLife.Controllers
         }
 
         [HttpPost("refresh")]
-        public IActionResult Refresh([FromBody] string refreshToken)
+        public IActionResult Refresh([FromBody] RefreshTokenViewModel model)
         {
-            if (refreshToken == null)
+            if (model.RefreshToken == null)
                 return BadRequest("Wrong refresh token");
 
-            return Ok();
+            bool isRefreshTokenValid = _refreshTokenValidator.Validate(model.RefreshToken);
+            if(!isRefreshTokenValid)
+            {
+                return BadRequest(new { errorMessage = "Invalid refresh token" });
+            }
+
+            var user = _userRepository.FindOne(u => u.RefreshToken == model.RefreshToken);
+
+            if(user == null)
+            {
+                return BadRequest(new { errorMessage = "User with this token not found" });
+            }
+
+            user.RefreshToken = _refreshTokenGenerator.GenerateToken();
+            _userRepository.Update(user);
+
+            return Ok(new
+            {
+                accessToken = _accessTokenGenerator.GenerateToken(user),
+                refreshToken = user.RefreshToken
+            });
         }
 
         [HttpPost("update")]
@@ -77,7 +109,7 @@ namespace MyLife.Controllers
         public IActionResult GetAllUsers()
         {
             var users = new List<UserViewModel>();
-            foreach (var user in _repo.GetAll())
+            foreach (var user in _userRepository.GetAll())
             {
                 users.Add(new UserViewModel(user));
             }
@@ -88,13 +120,13 @@ namespace MyLife.Controllers
         [HttpGet("getuser/{id}")]
         public IActionResult GetUser(string id)
         {
-            var user = _repo.Get(id);
+            var user = _userRepository.GetById(id);
             if(user == null)
                 return NotFound("User not found");
 
             return Ok(new
             {
-                id = user.Id.ToString(),
+                id = user.Id,
                 login = user.Login,
                 username = user.Username,
                 firstName = user.FirstName,
@@ -102,6 +134,31 @@ namespace MyLife.Controllers
                 city = user.City,
                 email = user.Email
             });
+        }
+
+        [HttpPost("adddesire")]
+        public IActionResult AddDesire([FromBody] DesireViewModel model)
+        {
+            _desireRepository.Add(new Desire(model));
+            return Ok();
+        }
+        
+        [HttpGet("findusers/{id}")]
+        public IActionResult FindUsers(string id)
+        {
+            IEnumerable<string> usersId = _desireRepository.GetAll().FirstOrDefault()?.UsersId;
+            List<UserViewModel> users = new List<UserViewModel>();
+            foreach(var userId in usersId)
+            {
+                var findedUser = _userRepository.GetById(userId);
+                if(findedUser != null)
+                    users.Add(new UserViewModel 
+                    {
+                        Id = findedUser.Id,
+                        Username = findedUser.Username
+                    });
+            }
+            return Ok(users);
         }
     }
 }

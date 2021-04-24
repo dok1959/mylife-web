@@ -6,7 +6,9 @@ namespace MyLife.Models
 {
     public class User
     {
-        public ObjectId Id { get; set; }
+        [BsonId]
+        [BsonRepresentation(BsonType.ObjectId)]
+        public string Id { get; set; }
 
         [BsonRequired]
         [BsonElement("login")]
@@ -30,6 +32,8 @@ namespace MyLife.Models
         [BsonRequired]
         [BsonElement("hashedPassword")]
         public string HashedPassword { get; set; }
+
+        public string RefreshToken { get; set; }
 
         public User(RegisterViewModel model)
         {

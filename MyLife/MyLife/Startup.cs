@@ -12,6 +12,7 @@ using MyLife.Repositories;
 using MyLife.Services.AccountServices;
 using MyLife.Services.PasswordHashers;
 using MyLife.Services.TokenGenerators;
+using MyLife.Services.TokenValidators;
 using System;
 using System.Text;
 
@@ -19,10 +20,10 @@ namespace MyLife
 {
     public class Startup
     {
-        public IConfiguration _configuration;
+        public IConfiguration Configuration;
         public Startup(IConfiguration configuration)
         {
-            _configuration = configuration;
+            Configuration = configuration;
         }
 
         // This method gets called by the runtime. Use this method to add services to the container.
@@ -34,7 +35,7 @@ namespace MyLife
                 options.LowercaseUrls = true;
             });
 
-            var accessTokenConfig = _configuration.GetSection("Authentication");
+            var accessTokenConfig = Configuration.GetSection("Authentication");
 
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
             {
@@ -51,17 +52,17 @@ namespace MyLife
                 };
             });
 
-            services.AddSingleton<ApplicationContext, ApplicationContext>();
-            services.AddSingleton<IRepository<User>, UserRepository>();
+            services.AddScoped<ApplicationContext>();
+            services.AddScoped<IRepository<User>, UserRepository>();
+            services.AddScoped<IRepository<Desire>, DesireRepository>();
 
-            services.AddSingleton<IAccountService, AccountService>();
-
-            services.AddSingleton<TokenGenerator>();
-            services.AddSingleton<AccessTokenGenerator>();
-            services.AddSingleton<RefreshTokenGenerator>();
+            services.AddTransient<IAccountService, AccountService>();
+            services.AddScoped<TokenGenerator>();
+            services.AddTransient<AccessTokenGenerator>();
+            services.AddTransient<RefreshTokenGenerator>();
 
             services.AddTransient<IPasswordHasher, BcryptPasswordHasher>();
-
+            services.AddTransient<RefreshTokenValidator>();
 
             services.AddControllers();
         }

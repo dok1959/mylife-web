@@ -6,11 +6,12 @@ namespace MyLife.Repositories
 {
     public interface IRepository<T> where T : class
     {
-        public T Get(string id);
-        public ICollection<T> GetAll();
-        public ICollection<T> Find(Expression<Func<T, bool>> predicate);
-        public void Add(T item);
-        public void Update(T item);
-        public void Remove(T item);
+        IEnumerable<T> GetAll();
+        IEnumerable<T> Find(Expression<Func<T, bool>> predicate);
+        T FindOne(Expression<Func<T, bool>> predicate);
+        T GetById(string id);
+        void Add(T item);
+        void Update(T item);
+        void Remove(T item);
     }
 }
