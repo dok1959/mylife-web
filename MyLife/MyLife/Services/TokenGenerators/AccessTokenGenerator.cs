@@ -22,7 +22,7 @@ namespace MyLife.Services.TokenGenerators
 
             List<Claim> claims = new List<Claim>
             {
-                new Claim("id", user.Id.ToString()),
+                new Claim("id", user.Id),
                 new Claim(ClaimTypes.Name, user.Login),
                 new Claim(ClaimTypes.Email, user.Email)
             };

@@ -1,6 +1,7 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using MyLife.ViewModels;
+using System;
 using System.Collections.Generic;
 
 namespace MyLife.Models
@@ -15,14 +16,28 @@ namespace MyLife.Models
 
         public string Description { get; set; }
 
+        public string Type { get; set; }
+
+        public DateTime Date { get; set; }
+
+        public bool IsPrivate { get; set; }
+
         [BsonRepresentation(BsonType.ObjectId)]
-        public List<string> UsersId { get; set; }
+        public string Owner { get; set; }
+
+        [BsonRepresentation(BsonType.ObjectId)]
+        public List<string> Members { get; set; }
+
+        public List<SubDesire> SubDesires { get; set; }
 
         public Desire(DesireViewModel model)
         {
             Title = model.Title;
             Description = model.Description;
-            UsersId = model.UsersId;
+            Type = model.Type;
+            Date = model.Date;
+            IsPrivate = model.IsPrivate;
+            Members = new List<string>();
         }
     }
 }

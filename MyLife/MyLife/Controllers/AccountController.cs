@@ -136,29 +136,28 @@ namespace MyLife.Controllers
             });
         }
 
+        [Authorize]
         [HttpPost("adddesire")]
         public IActionResult AddDesire([FromBody] DesireViewModel model)
         {
-            _desireRepository.Add(new Desire(model));
-            return Ok();
-        }
-        
-        [HttpGet("findusers/{id}")]
-        public IActionResult FindUsers(string id)
-        {
-            IEnumerable<string> usersId = _desireRepository.GetAll().FirstOrDefault()?.UsersId;
-            List<UserViewModel> users = new List<UserViewModel>();
-            foreach(var userId in usersId)
+            var desire = new Desire(model);
+            var userId = HttpContext.User.FindFirst("id")?.Value;
+
+            desire.Owner = userId;
+            desire.Members.Add(userId);
+
+            var subDesires = new List<SubDesire>();
+            foreach(var subDesireViewModel in model.SubDesires)
             {
-                var findedUser = _userRepository.GetById(userId);
-                if(findedUser != null)
-                    users.Add(new UserViewModel 
-                    {
-                        Id = findedUser.Id,
-                        Username = findedUser.Username
-                    });
+                var subDesire = new SubDesire(subDesireViewModel);
+                subDesire.UserId = userId;
+                subDesires.Add(subDesire);
             }
-            return Ok(users);
+
+            desire.SubDesires = subDesires;
+
+            _desireRepository.Add(desire);
+            return Ok();
         }
     }
 }
