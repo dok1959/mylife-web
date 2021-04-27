@@ -6,33 +6,29 @@ using MyLife.Services.AccountServices;
 using MyLife.Services.TokenGenerators;
 using MyLife.Services.TokenValidators;
 using MyLife.ViewModels;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace MyLife.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AccountController : ControllerBase
+    public class AuthController : ControllerBase
     {
         private IRepository<User> _userRepository;
-        private IRepository<Desire> _desireRepository;
         private IAccountService _accountService;
 
         private AccessTokenGenerator _accessTokenGenerator;
         private RefreshTokenGenerator _refreshTokenGenerator;
         private RefreshTokenValidator _refreshTokenValidator;
 
-        public AccountController(
+        public AuthController(
             IRepository<User> userRepository,
-            IRepository<Desire> desireRepository,
             IAccountService accountService,
             AccessTokenGenerator accessTokenGenerator,
             RefreshTokenGenerator refreshTokenGenerator,
             RefreshTokenValidator refreshTokenValidator)
         {
             _userRepository = userRepository;
-            _desireRepository = desireRepository;
             _accountService = accountService;
             _accessTokenGenerator = accessTokenGenerator;
             _refreshTokenGenerator = refreshTokenGenerator;
@@ -56,6 +52,13 @@ namespace MyLife.Controllers
                 accessToken = _accessTokenGenerator.GenerateToken(user),
                 refreshToken = user.RefreshToken
             });
+        }
+
+        [Authorize]
+        [HttpPost("logout")]
+        public IActionResult Logout()
+        {
+            return Ok();
         }
 
         [HttpPost("register")]
@@ -96,68 +99,6 @@ namespace MyLife.Controllers
                 accessToken = _accessTokenGenerator.GenerateToken(user),
                 refreshToken = user.RefreshToken
             });
-        }
-
-        [HttpPost("update")]
-        public IActionResult Update()
-        {
-            return Ok();
-        }
-
-        [Authorize]
-        [HttpGet("getallusers")]
-        public IActionResult GetAllUsers()
-        {
-            var users = new List<UserViewModel>();
-            foreach (var user in _userRepository.GetAll())
-            {
-                users.Add(new UserViewModel(user));
-            }
-            return Ok(users);
-        }
-
-        [Authorize]
-        [HttpGet("getuser/{id}")]
-        public IActionResult GetUser(string id)
-        {
-            var user = _userRepository.GetById(id);
-            if(user == null)
-                return NotFound("User not found");
-
-            return Ok(new
-            {
-                id = user.Id,
-                login = user.Login,
-                username = user.Username,
-                firstName = user.FirstName,
-                lastName = user.LastName,
-                city = user.City,
-                email = user.Email
-            });
-        }
-
-        [Authorize]
-        [HttpPost("adddesire")]
-        public IActionResult AddDesire([FromBody] DesireViewModel model)
-        {
-            var desire = new Desire(model);
-            var userId = HttpContext.User.FindFirst("id")?.Value;
-
-            desire.Owner = userId;
-            desire.Members.Add(userId);
-
-            var subDesires = new List<SubDesire>();
-            foreach(var subDesireViewModel in model.SubDesires)
-            {
-                var subDesire = new SubDesire(subDesireViewModel);
-                subDesire.UserId = userId;
-                subDesires.Add(subDesire);
-            }
-
-            desire.SubDesires = subDesires;
-
-            _desireRepository.Add(desire);
-            return Ok();
         }
     }
 }

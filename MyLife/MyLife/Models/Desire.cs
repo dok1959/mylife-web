@@ -30,6 +30,11 @@ namespace MyLife.Models
 
         public List<SubDesire> SubDesires { get; set; }
 
+        public Desire()
+        {
+            Members = new List<string>();
+        }
+
         public Desire(DesireViewModel model)
         {
             Title = model.Title;

@@ -1,6 +1,7 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using MyLife.ViewModels;
+using System.Collections.Generic;
 
 namespace MyLife.Models
 {
@@ -32,6 +33,8 @@ namespace MyLife.Models
         [BsonRequired]
         [BsonElement("hashedPassword")]
         public string HashedPassword { get; set; }
+
+        public UserFriends Friends { get; set; }
 
         public string RefreshToken { get; set; }
 
