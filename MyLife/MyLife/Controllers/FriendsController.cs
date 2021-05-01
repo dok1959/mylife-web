@@ -162,18 +162,31 @@ namespace MyLife.Controllers
         {
             var userId = HttpContext.User.FindFirst("id")?.Value;
             var user = _usersRepository.GetById(userId);
+            var friend = _usersRepository.GetById(id);
 
-            if (user.Friends.Sent.Count == 0)
+            if(friend == null)
+            {
+                return BadRequest(new { errorMessage = "User with this id doesn't exist" });
+            }
+
+            if(user.Friends.Sent.Count == 0)
             {
                 return BadRequest(new { errorMessage = "User doesn't have sent invitations" });
             }
 
-            if (!user.Friends.Sent.Remove(id))
+            if(!user.Friends.Sent.Remove(id))
             {
                 return BadRequest(new { errorMessage = "Can't remove sent invitation with this id" });
             }
 
+            if(!friend.Friends.Received.Remove(userId))
+            {
+                return BadRequest(new { errorMessage = "Can't remove received invitation with this id" });
+            }
+
+            _usersRepository.Update(friend);
             _usersRepository.Update(user);
+
             return Ok();
         }
         #endregion
@@ -244,6 +257,12 @@ namespace MyLife.Controllers
         {
             var userId = HttpContext.User.FindFirst("id")?.Value;
             var user = _usersRepository.GetById(userId);
+            var friend = _usersRepository.GetById(id);
+
+            if (friend == null)
+            {
+                return BadRequest(new { errorMessage = "User with this id doesn't exist" });
+            }
 
             if (user.Friends.Received.Count == 0)
             {
@@ -255,7 +274,14 @@ namespace MyLife.Controllers
                 return BadRequest(new { errorMessage = "Can't remove received invitation with this id" });
             }
 
+            if (!friend.Friends.Sent.Remove(userId))
+            {
+                return BadRequest(new { errorMessage = "Can't remove sent invitation with this id" });
+            }
+
+            _usersRepository.Update(friend);
             _usersRepository.Update(user);
+
             return Ok();
         }
 
