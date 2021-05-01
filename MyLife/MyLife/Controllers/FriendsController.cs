@@ -72,8 +72,14 @@ namespace MyLife.Controllers
         {
             var userId = HttpContext.User.FindFirst("id")?.Value;
             var user = _usersRepository.GetById(userId);
+            var friend = _usersRepository.GetById(id);
 
-            if (user.Friends.Available.Count == 0)
+            if(friend == null)
+            {
+                return BadRequest(new { errorMessage = "User with this id doesn't exist" });
+            }
+
+            if(user.Friends.Available.Count == 0)
             {
                 return BadRequest(new { errorMessage = "User doesn't have friends" });
             }
@@ -83,7 +89,14 @@ namespace MyLife.Controllers
                 return BadRequest(new { errorMessage = "Can't remove friend with this id" });
             }
 
+            if(!friend.Friends.Available.Remove(userId))
+            {
+                return BadRequest(new { errorMessage = "Can't remove friend with this id" });
+            }
+
             _usersRepository.Update(user);
+            _usersRepository.Update(friend);
+
             return Ok();
         }
         #endregion
