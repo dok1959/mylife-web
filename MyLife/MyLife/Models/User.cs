@@ -1,7 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using MyLife.ViewModels;
-using System.Collections.Generic;
 
 namespace MyLife.Models
 {
@@ -38,6 +37,11 @@ namespace MyLife.Models
 
         public string RefreshToken { get; set; }
 
+        public User()
+        {
+            Friends = new UserFriends();
+        }
+
         public User(RegisterViewModel model)
         {
             Login = model.Login;
@@ -45,6 +49,7 @@ namespace MyLife.Models
             FirstName = model.FirstName;
             LastName = model.LastName;
             Email = model.Email;
+            Friends = new UserFriends();
         }
     }
 }

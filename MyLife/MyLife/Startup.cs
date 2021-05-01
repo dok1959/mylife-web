@@ -1,3 +1,4 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -8,11 +9,13 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using MyLife.Data;
 using MyLife.Models;
+using MyLife.Profiles;
 using MyLife.Repositories;
 using MyLife.Services.AccountServices;
 using MyLife.Services.PasswordHashers;
 using MyLife.Services.TokenGenerators;
 using MyLife.Services.TokenValidators;
+using MyLife.ViewModels;
 using System;
 using System.Text;
 
@@ -63,6 +66,12 @@ namespace MyLife
 
             services.AddTransient<IPasswordHasher, BcryptPasswordHasher>();
             services.AddTransient<RefreshTokenValidator>();
+
+            //services.AddAutoMapper(cfg => cfg.CreateMap<User, ProfileViewModel>() ,typeof(Startup));
+
+            services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+            services.AddTransient<IMapper, Mapper>();
 
             services.AddControllers();
         }

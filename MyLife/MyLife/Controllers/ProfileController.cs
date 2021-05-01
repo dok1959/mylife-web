@@ -37,7 +37,7 @@ namespace MyLife.Controllers
 
         [Authorize]
         [HttpPatch]
-        public IActionResult Update([FromBody] ProfileViewModel model)
+        public IActionResult Update([FromBody] MyProfileViewModel model)
         {
             var userId = HttpContext.User.FindFirst("id")?.Value;
             var repoUser = _usersRepository.GetById(userId);
