@@ -5,6 +5,7 @@ using MyLife.Models;
 using MyLife.Repositories;
 using MyLife.ViewModels;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace MyLife.Controllers
 {
@@ -21,6 +22,7 @@ namespace MyLife.Controllers
             _mapper = mapper;
         }
 
+        #region AvailableFriends
         [Authorize]
         [HttpGet]
         public IActionResult Get()
@@ -64,6 +66,29 @@ namespace MyLife.Controllers
             return Ok(_mapper.Map<ProfileViewModel>(user));
         }
 
+        [Authorize]
+        [HttpDelete]
+        public IActionResult Delete([FromForm] string id)
+        {
+            var userId = HttpContext.User.FindFirst("id")?.Value;
+            var user = _usersRepository.GetById(userId);
+
+            if (user.Friends.Available.Count == 0)
+            {
+                return BadRequest(new { errorMessage = "User doesn't have friends" });
+            }
+
+            if(!user.Friends.Available.Remove(id))
+            {
+                return BadRequest(new { errorMessage = "Can't remove friend with this id" });
+            }
+
+            _usersRepository.Update(user);
+            return Ok();
+        }
+        #endregion
+
+        #region SentInvitations
         [Authorize]
         [HttpGet("sent")]
         public IActionResult GetSentInvitations()
@@ -132,6 +157,29 @@ namespace MyLife.Controllers
         }
 
         [Authorize]
+        [HttpDelete("sent")]
+        public IActionResult DeleteSentInvitation([FromForm] string id)
+        {
+            var userId = HttpContext.User.FindFirst("id")?.Value;
+            var user = _usersRepository.GetById(userId);
+
+            if (user.Friends.Sent.Count == 0)
+            {
+                return BadRequest(new { errorMessage = "User doesn't have sent invitations" });
+            }
+
+            if (!user.Friends.Sent.Remove(id))
+            {
+                return BadRequest(new { errorMessage = "Can't remove sent invitation with this id" });
+            }
+
+            _usersRepository.Update(user);
+            return Ok();
+        }
+        #endregion
+
+        #region ReceivedInvitations
+        [Authorize]
         [HttpGet("received")]
         public IActionResult GetReceivedInvitations()
         {
@@ -191,18 +239,45 @@ namespace MyLife.Controllers
         }
 
         [Authorize]
-        [HttpDelete]
-        public IActionResult Delete([FromBody] string id)
+        [HttpDelete("received")]
+        public IActionResult DeleteReceivedInvitation([FromForm] string id)
         {
+            var userId = HttpContext.User.FindFirst("id")?.Value;
+            var user = _usersRepository.GetById(userId);
+
+            if (user.Friends.Received.Count == 0)
+            {
+                return BadRequest(new { errorMessage = "User doesn't have received invitations" });
+            }
+
+            if (!user.Friends.Received.Remove(id))
+            {
+                return BadRequest(new { errorMessage = "Can't remove received invitation with this id" });
+            }
+
+            _usersRepository.Update(user);
             return Ok();
         }
 
+        #endregion
+
+        #region FindFriends
         [Authorize]
         [HttpGet("find")]
         public IActionResult FindAll()
         {
             var userId = HttpContext.User.FindFirst("id")?.Value;
-            var users = _usersRepository.Find(u => !u.Id.Equals(userId));
+            var availableUserFriends = _usersRepository.GetById(userId)?.Friends.Available;  
+            var users = _usersRepository.Find(u => !u.Id.Equals(userId)).ToList();
+
+            foreach(var availableFriend in availableUserFriends)
+            {
+                var friend = users.Find(u => u.Id == availableFriend);
+                if(friend != null)
+                {
+                    users.Remove(friend);
+                }
+            }
             return Ok(_mapper.Map<IEnumerable<ProfileViewModel>>(users));
         }
 
@@ -211,8 +286,19 @@ namespace MyLife.Controllers
         public IActionResult FindByUsername(string username)
         {
             var userId = HttpContext.User.FindFirst("id")?.Value;
-            var users = _usersRepository.Find(u => u.Username == username && !u.Id.Equals(userId));
+            var availableUserFriends = _usersRepository.GetById(userId)?.Friends.Available;
+            var users = _usersRepository.Find(u => u.Username == username && !u.Id.Equals(userId)).ToList();
+
+            foreach (var availableFriend in availableUserFriends)
+            {
+                var friend = users.Find(u => u.Id == availableFriend);
+                if (friend != null)
+                {
+                    users.Remove(friend);
+                }
+            }
             return Ok(_mapper.Map<IEnumerable<ProfileViewModel>>(users));
         }
+        #endregion
     }
 }
