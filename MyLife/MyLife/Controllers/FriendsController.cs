@@ -187,14 +187,13 @@ namespace MyLife.Controllers
                 return BadRequest(new { errorMessage = "User doesn't have sent invitations" });
             }
 
-            if(!user.Friends.Sent.Remove(id))
+            if (user.Friends.Sent.Remove(id))
             {
-                return BadRequest(new { errorMessage = "Can't remove sent invitation with this id" });
+                friend.Friends.Received.Remove(userId);
             }
-
-            if(!friend.Friends.Received.Remove(userId))
+            else
             {
-                return BadRequest(new { errorMessage = "Can't remove received invitation with this id" });
+                return BadRequest(new { errorMessage = "Can't remove invitation with this id" });
             }
 
             _usersRepository.Update(friend);
@@ -237,12 +236,12 @@ namespace MyLife.Controllers
             var user = _usersRepository.GetById(userId);
             var friend = _usersRepository.GetById(id);
 
-            if (userId.Equals(id))
+            if(userId.Equals(id))
             {
                 return BadRequest(new { errorMessage = "You can't invite yourself" });
             }
 
-            if (user.Friends.Available.Contains(id))
+            if(user.Friends.Available.Contains(id))
             {
                 return BadRequest(new { errorMessage = "User already your friend" });
             }
@@ -282,14 +281,13 @@ namespace MyLife.Controllers
                 return BadRequest(new { errorMessage = "User doesn't have received invitations" });
             }
 
-            if (!user.Friends.Received.Remove(id))
+            if (user.Friends.Received.Remove(id))
             {
-                return BadRequest(new { errorMessage = "Can't remove received invitation with this id" });
+                friend.Friends.Sent.Remove(userId);
             }
-
-            if (!friend.Friends.Sent.Remove(userId))
+            else
             {
-                return BadRequest(new { errorMessage = "Can't remove sent invitation with this id" });
+                return BadRequest(new { errorMessage = "Can't remove invitation with this id" });
             }
 
             _usersRepository.Update(friend);

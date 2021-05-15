@@ -56,7 +56,7 @@ namespace MyLife
             });
 
             services.AddScoped<ApplicationContext>();
-            services.AddScoped<IRepository<User>, UserRepository>();
+            services.AddSingleton<IRepository<User>, UserInMemoryRepository>();
             services.AddScoped<IRepository<Desire>, DesireRepository>();
 
             services.AddTransient<IAccountService, AccountService>();
