@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using MyLife.Models.TargetModels;
 using MyLife.Repositories;
 using MyLife.ViewModels;
+using MyLife.ViewModels.TargetViewModels;
 using System.Collections.Generic;
 
 namespace MyLife.Controllers
@@ -46,7 +47,7 @@ namespace MyLife.Controllers
 
         [Authorize]
         [HttpPost]
-        public IActionResult Post([FromBody] TargetViewModel model)
+        public IActionResult Post([FromBody] TargetCreationViewModel model)
         {
             var userId = HttpContext.User.FindFirst("id")?.Value;
             var target = new Target(model, userId);
@@ -54,16 +55,19 @@ namespace MyLife.Controllers
             return Ok();
         }
 
-        /*
+        
         [Authorize]
         [HttpPut]
         public IActionResult Put([FromBody] TargetViewModel model)
         {
             var userId = HttpContext.User.FindFirst("id")?.Value;
-            _targetRepository.Update(new Target(model, userId));
+            var target = _targetRepository.GetById(model.Id);
+            target.Title = model.Title;
+            _targetRepository.Update(target);
             return Ok();
         }
-        
+
+        /*
         [Authorize]
         [HttpDelete]
         public IActionResult Delete([FromForm] string id)

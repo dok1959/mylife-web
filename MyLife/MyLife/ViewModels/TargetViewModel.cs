@@ -5,6 +5,7 @@ namespace MyLife.ViewModels
 {
     public class TargetViewModel
     {
+        public string Id { get; set; }
         public string Title { get; set; }
         public List<ProgressViewModel> Progress { get; set; }
 
@@ -14,6 +15,7 @@ namespace MyLife.ViewModels
         }
         public TargetViewModel(Target target)
         {
+            Id = target.Id;
             Title = target.Title;
             Progress = new List<ProgressViewModel>();
             foreach (var progress in target.Progress)
