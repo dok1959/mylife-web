@@ -9,6 +9,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using MyLife.Data;
 using MyLife.Models;
+using MyLife.Models.TargetModels;
 using MyLife.Profiles;
 using MyLife.Repositories;
 using MyLife.Services.AccountServices;
@@ -57,7 +58,7 @@ namespace MyLife
 
             services.AddScoped<ApplicationContext>();
             services.AddSingleton<IRepository<User>, UserInMemoryRepository>();
-            services.AddScoped<IRepository<Desire>, DesireRepository>();
+            services.AddSingleton<IRepository<Target>, TargetInMemoryRepository>();
 
             services.AddTransient<IAccountService, AccountService>();
             services.AddScoped<TokenGenerator>();

@@ -1,4 +1,4 @@
-﻿using MyLife.Models.Targets;
+﻿using MyLife.Models.TargetModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;

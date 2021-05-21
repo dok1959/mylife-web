@@ -11,6 +11,6 @@ namespace MyLife.Models.TargetModels
         public string Owner { get; set; }
         public DateTime Date { get; set; }
         public ProgressValue Value { get; set; }
-        public List<SubProgress> CheckBocks { get; set; }
+        public List<SubProgress> CheckBoxes { get; set; }
     }
 }
