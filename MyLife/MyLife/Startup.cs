@@ -14,6 +14,7 @@ using MyLife.Profiles;
 using MyLife.Repositories;
 using MyLife.Services.AccountServices;
 using MyLife.Services.PasswordHashers;
+using MyLife.Services.TargetServices;
 using MyLife.Services.TokenGenerators;
 using MyLife.Services.TokenValidators;
 using MyLife.ViewModels;
@@ -67,6 +68,8 @@ namespace MyLife
 
             services.AddTransient<IPasswordHasher, BcryptPasswordHasher>();
             services.AddTransient<RefreshTokenValidator>();
+
+            services.AddTransient<ITargetService, TargetService>();
 
             //services.AddAutoMapper(cfg => cfg.CreateMap<User, ProfileViewModel>() ,typeof(Startup));
 

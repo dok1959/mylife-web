@@ -1,10 +1,12 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MyLife.Models;
 using MyLife.Models.TargetModels;
 using MyLife.Repositories;
 using MyLife.ViewModels;
 using MyLife.ViewModels.TargetViewModels;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace MyLife.Controllers
 {
@@ -13,9 +15,11 @@ namespace MyLife.Controllers
     public class TargetsController : ControllerBase
     {
         private IRepository<Target> _targetRepository;
-        public TargetsController(IRepository<Target> targetRepository)
+        private IRepository<User> _userRepository;
+        public TargetsController(IRepository<Target> targetRepository, IRepository<User> userRepository)
         {
             _targetRepository = targetRepository;
+            _userRepository = userRepository;
         }
 
         [Authorize]
@@ -52,7 +56,7 @@ namespace MyLife.Controllers
             var userId = HttpContext.User.FindFirst("id")?.Value;
             var target = new Target(model, userId);
             _targetRepository.Add(target);
-            return Ok();
+            return Ok(new { id = target.Id });
         }
 
         
@@ -61,19 +65,23 @@ namespace MyLife.Controllers
         public IActionResult Put([FromBody] TargetViewModel model)
         {
             var userId = HttpContext.User.FindFirst("id")?.Value;
-            var target = _targetRepository.GetById(model.Id);
+            var target = _targetRepository.Find(t => t.Id.Equals(model.Id)).SingleOrDefault();
+            if(target == null)
+            {
+                return BadRequest(new { errorMessage = "Target doesn't exist" });
+            }
             target.Title = model.Title;
             _targetRepository.Update(target);
             return Ok();
         }
 
-        /*
+        
         [Authorize]
         [HttpDelete]
         public IActionResult Delete([FromForm] string id)
         {
             var userId = HttpContext.User.FindFirst("id")?.Value;
-            var target = _targetRepository.GetById(id);
+            var target = _targetRepository.Find(t => t.Id.Equals(id)).SingleOrDefault();
             if (userId != target.Owner)
             {
                 return BadRequest(new { errorMessage = "You are not owner of this target" });
@@ -81,6 +89,18 @@ namespace MyLife.Controllers
             _targetRepository.Remove(target);
             return Ok();
         }
-        */
+
+        [Authorize]
+        [HttpPost]
+        public IActionResult InviteUser([FromForm] string targetId, string receiverId)
+        {
+            var userId = HttpContext.User.FindFirst("id")?.Value;
+            var target = _targetRepository.Find(t => t.Id.Equals(targetId) || t.Members.Contains(userId)).SingleOrDefault();
+
+            var receiver = _userRepository.Find(u => u.Id.Equals(receiverId)).SingleOrDefault();
+
+            return Ok();
+        }
+
     }
 }

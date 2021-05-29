@@ -23,7 +23,12 @@ namespace MyLife.Models.TargetModels
 
         public List<Progress> Progress { get; set; }
 
-        public Target(TargetViewModel model, string id)
+        public Target()
+        {
+            Members = new List<string>();
+        }
+
+        public Target(TargetViewModel model, string id) : this()
         {
             Owner = id;
             Title = model.Title;
@@ -39,7 +44,7 @@ namespace MyLife.Models.TargetModels
                 });
             }
         }
-        public Target(TargetCreationViewModel model, string id)
+        public Target(TargetCreationViewModel model, string id) : this()
         {
             Owner = id;
             Title = model.Title;
@@ -49,7 +54,7 @@ namespace MyLife.Models.TargetModels
                 Progress.Add(new Progress
                 {
                     Owner = id,
-                    Date = DateTime.Parse(progress.Date).Date,
+                    Date = DateTime.Parse(progress.Date),
                     Value = progress.Value,
                     CheckBoxes = progress.CheckBoxes
                 });
