@@ -35,13 +35,19 @@ namespace MyLife.Models.TargetModels
             Progress = new List<Progress>();
             foreach (var progress in model.Progress)
             {
-                Progress.Add(new Progress
+                var p = new Progress
                 {
                     Owner = id,
-                    Date = DateTime.Parse(progress.Date).Date,
                     Value = progress.Value,
                     CheckBoxes = progress.CheckBoxes
-                });
+                };
+                if (progress.Date != null)
+                {
+                    var dateTime = DateTime.Parse(progress.Date);
+                    if (dateTime != null)
+                        p.Date = dateTime.Date;
+                }
+                Progress.Add(p);
             }
         }
         public Target(TargetCreationViewModel model, string id) : this()
@@ -51,13 +57,19 @@ namespace MyLife.Models.TargetModels
             Progress = new List<Progress>();
             foreach (var progress in model.Progress)
             {
-                Progress.Add(new Progress
+                var p = new Progress
                 {
                     Owner = id,
-                    Date = DateTime.Parse(progress.Date),
                     Value = progress.Value,
                     CheckBoxes = progress.CheckBoxes
-                });
+                };
+                if (progress.Date != null)
+                {
+                    var dateTime = DateTime.Parse(progress.Date);
+                    if (dateTime != null)
+                        p.Date = dateTime.Date;
+                }    
+                Progress.Add(p);
             }
         }
     }

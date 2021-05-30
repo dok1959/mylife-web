@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using MyLife.Models;
 using MyLife.Models.TargetModels;
 using MyLife.Repositories;
+using MyLife.Services.TargetServices;
 using MyLife.ViewModels;
 using MyLife.ViewModels.TargetViewModels;
 using System.Collections.Generic;
@@ -16,10 +17,12 @@ namespace MyLife.Controllers
     {
         private IRepository<Target> _targetRepository;
         private IRepository<User> _userRepository;
-        public TargetsController(IRepository<Target> targetRepository, IRepository<User> userRepository)
+        private ITargetService _targetService;
+        public TargetsController(IRepository<Target> targetRepository, IRepository<User> userRepository, ITargetService targetService)
         {
             _targetRepository = targetRepository;
             _userRepository = userRepository;
+            _targetService = targetService;
         }
 
         [Authorize]
@@ -27,7 +30,7 @@ namespace MyLife.Controllers
         public IActionResult Get()
         {
             var userId = HttpContext.User.FindFirst("id")?.Value;
-            var userTargets = _targetRepository.Find(t => t.Owner.Equals(userId));
+            var userTargets = _targetRepository.Find(t => t.Owner.Equals(userId) || t.Members.Equals(userId));
             List<TargetViewModel> targets = new List<TargetViewModel>();
             foreach(var target in userTargets)
             {
@@ -91,14 +94,104 @@ namespace MyLife.Controllers
         }
 
         [Authorize]
-        [HttpPost]
-        public IActionResult InviteUser([FromForm] string targetId, string receiverId)
+        [HttpPost("invitations")]
+        public IActionResult InviteUser([FromForm] string targetId, [FromForm] string receiverId)
         {
             var userId = HttpContext.User.FindFirst("id")?.Value;
-            var target = _targetRepository.Find(t => t.Id.Equals(targetId) || t.Members.Contains(userId)).SingleOrDefault();
 
             var receiver = _userRepository.Find(u => u.Id.Equals(receiverId)).SingleOrDefault();
+            if(receiver == null)
+            {
+                return BadRequest(new { errorMessage = "User doesn't exist" });
+            }
 
+            var target = _targetRepository.Find(t => t.Owner.Equals(receiverId) || t.Members.Contains(receiverId)).SingleOrDefault();
+            if(target != null)
+            {
+                return BadRequest(new { errorMessage = "User already involved in this target" });
+            }
+
+            var targetInvitation = receiver.TargetsInvitations.Find(t => t.SenderId.Equals(userId) && t.TargetId.Equals(targetId));
+            if (targetInvitation != null)
+            {
+                return BadRequest(new { errorMessage = "Invitation to this target already exist" });
+            }
+
+            _targetService.InviteUser(receiver, userId, targetId);
+
+            return Ok();
+        }
+
+        [Authorize]
+        [HttpDelete("invitations")]
+        public IActionResult DeleteUser([FromForm] string targetId, [FromForm] string receiverId)
+        {
+            var userId = HttpContext.User.FindFirst("id")?.Value;
+            var target = _targetRepository.Find(t => t.Id.Equals(targetId) && (t.Members.Contains(userId) || t.Owner.Equals(userId))).SingleOrDefault();
+
+            var receiver = _userRepository.Find(u => u.Id.Equals(receiverId)).SingleOrDefault();
+            if (receiver == null)
+            {
+                return BadRequest(new { errorMessage = "User doesn't exist" });
+            }
+            _targetService.DeleteUser(receiver, userId, target);
+
+            return Ok();
+        }
+
+        [Authorize]
+        [HttpPost("invitations")]
+        public IActionResult AcceptInvitation([FromForm] string targetId)
+        {
+            var userId = HttpContext.User.FindFirst("id")?.Value;
+
+            var receiver = _userRepository.Find(u => u.Id.Equals(userId)).SingleOrDefault();
+            if (receiver == null)
+            {
+                return BadRequest(new { errorMessage = "User doesn't exist" });
+            }
+
+            var target = _targetRepository.Find(t => t.Id.Equals(targetId)).SingleOrDefault();
+            if(target == null)
+            {
+                return BadRequest(new { errorMessage = "Target with this id doesn't exist" });
+            }
+
+            if(target.Owner.Equals(userId) || target.Members.Contains(userId))
+            {
+                return BadRequest(new { errorMessage = "User already involved in this target" });
+            }
+
+            var targetInvitation = receiver.TargetsInvitations.Find(t => t.TargetId.Equals(targetId));
+            if(targetInvitation == null)
+            {
+                return BadRequest(new { errorMessage = "User doesn't received invitation to target with this id" });
+            }
+
+            _targetService.AcceptInvitation(receiver, targetInvitation, target);
+
+            return Ok();
+        }
+
+        [Authorize]
+        [HttpPost("invitations")]
+        public IActionResult DeclineInvitation([FromForm] string targetId)
+        {
+            var userId = HttpContext.User.FindFirst("id")?.Value;
+
+            var receiver = _userRepository.Find(u => u.Id.Equals(userId)).SingleOrDefault();
+            if (receiver == null)
+            {
+                return BadRequest(new { errorMessage = "User doesn't exist" });
+            }
+
+            var targetInvitation = receiver.TargetsInvitations.Find(t => t.TargetId.Equals(targetId));
+            if (targetInvitation == null)
+            {
+                return BadRequest(new { errorMessage = "User doesn't received invitation to target with this id" });
+            }
+
+            _targetService.DeclineInvitation(receiver, targetInvitation);
             return Ok();
         }
 
