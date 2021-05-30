@@ -20,12 +20,16 @@ namespace MyLife.ViewModels
             Progress = new List<ProgressViewModel>();
             foreach (var progress in target.Progress)
             {
-                Progress.Add(new ProgressViewModel
+                var p = new ProgressViewModel
                 {
-                    Date = progress.Date.ToString(),
                     Value = progress.Value,
                     CheckBoxes = progress.CheckBoxes
-                });
+                };
+                if (progress.Date.HasValue)
+                    p.Date = progress.Date.Value.ToString();
+                else
+                    p.Date = null;
+                Progress.Add(p);
             }
         }
     }
