@@ -1,14 +1,12 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using MyLife.Models;
 using MyLife.Models.StatisticModels;
 using MyLife.Models.TargetModels;
 using MyLife.Repositories;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace MyLife.Controllers
 {
@@ -29,12 +27,15 @@ namespace MyLife.Controllers
             var userId = HttpContext.User.FindFirst("id")?.Value;
             var userTargets = _targetRepository.Find(t => t.Owner.Equals(userId) || t.Members.Contains(userId)).ToList();
             Statistic statistic = new Statistic();
-
+            int i = userTargets.Count();
             List<Progress> allUserProgress = new List<Progress>();
             userTargets.ForEach(t =>
             {
                 allUserProgress.AddRange(t.Progress.FindAll(p => p.Owner.Equals(userId)));
             });
+
+            if(allUserProgress.Count() == 0)
+                return Ok(statistic);
 
             var grouppedTasksByDates = allUserProgress.Where(p => p.Date.HasValue).OrderBy(p => p.Date.Value).GroupBy(p => p.Date.Value).ToList();
 
