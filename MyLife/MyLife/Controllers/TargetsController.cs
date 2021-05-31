@@ -6,6 +6,7 @@ using MyLife.Repositories;
 using MyLife.Services.TargetServices;
 using MyLife.ViewModels;
 using MyLife.ViewModels.TargetViewModels;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -27,13 +28,23 @@ namespace MyLife.Controllers
 
         [Authorize]
         [HttpGet]
-        public IActionResult Get()
+        public IActionResult Get([FromForm] string date)
         {
             var userId = HttpContext.User.FindFirst("id")?.Value;
-            var userTargets = _targetRepository.Find(t => t.Owner.Equals(userId) || t.Members.Equals(userId));
+            var userTargets = _targetRepository.Find(t => (t.Owner.Equals(userId) || t.Members.Equals(userId))).ToList();
+
+            if(date == null || !DateTime.TryParse(date, out DateTime currentDate))
+                return BadRequest(new { errorMessage = "Wrong Date" });
+
             List<TargetViewModel> targets = new List<TargetViewModel>();
             foreach(var target in userTargets)
             {
+                var targetWithCurrentDate = target.Progress.Find(t => t.Date.Value.Equals(currentDate.Date));
+                if (targetWithCurrentDate != null)
+                {
+                    target.Progress = new List<Progress>();
+                    target.Progress.Add(targetWithCurrentDate);
+                }
                 targets.Add(new TargetViewModel(target));
             }
             return Ok(targets);
@@ -41,7 +52,7 @@ namespace MyLife.Controllers
 
         [Authorize]
         [HttpGet("{id}")]
-        public IActionResult Get(string id)
+        public IActionResult Get(string id, [FromForm] string date)
         {
             var userId = HttpContext.User.FindFirst("id")?.Value;
             var target = _targetRepository.GetById(id);
