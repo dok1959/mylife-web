@@ -44,8 +44,8 @@ namespace MyLife.Controllers
                 {
                     target.Progress = new List<Progress>();
                     target.Progress.Add(targetWithCurrentDate);
+                    targets.Add(new TargetViewModel(target));
                 }
-                targets.Add(new TargetViewModel(target));
             }
             return Ok(targets);
         }
