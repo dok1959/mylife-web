@@ -28,7 +28,7 @@ namespace MyLife.Controllers
 
         [Authorize]
         [HttpGet]
-        public IActionResult Get([FromForm] string date)
+        public IActionResult Get(string date)
         {
             var userId = HttpContext.User.FindFirst("id")?.Value;
             var userTargets = _targetRepository.Find(t => (t.Owner.Equals(userId) || t.Members.Equals(userId))).ToList();
@@ -52,7 +52,7 @@ namespace MyLife.Controllers
 
         [Authorize]
         [HttpGet("{id}")]
-        public IActionResult Get(string id, [FromForm] string date)
+        public IActionResult Get(string id, string date)
         {
             var userId = HttpContext.User.FindFirst("id")?.Value;
             var target = _targetRepository.GetById(id);
